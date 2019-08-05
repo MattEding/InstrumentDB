@@ -4,47 +4,20 @@ import pickle
 from importlib import resources
 from urllib.parse import urlparse
 
-from requests.compat import urljoin
 from selenium import webdriver
 
-from instruments.data.gibson import json as json_dir, html as html_dir
+# from instruments.data.gibson import json as json_dir, html as html_dir
+from instruments.webscrape.utils import ScraperABC
 
 
-class GibsonScraper:
+class GibsonScraper(ScraperABC):
     def __init__(
             self,
-            webdriver='Firefox',
+            browser='Firefox',
             headless=True,
             json_file='gibson_data.json',
         ):
-        self.webdriver = str(webdriver).title()
-        self.headless = bool(headless)
-        self.json_file = resources.path(json_dir, str(json_file))
-        self._driver = None
-        self._root_url = 'https://www.gibson.com/'
-
-
-    def __enter__(self):
-        options = getattr(webdriver, f'{self.webdriver}Options')()
-        options.headless = self.headless
-        self._driver = getattr(webdriver, self.webdriver)(options=options)
-
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        self._driver.close()
-
-
-    def save_guitar_data(self):
-        for url, html in self._get_guitar_raw:
-            data = self._merge_parsed_data(url)
-
-            with open(self.json_file, 'a') as fp:
-                json.dump(data)
-                fp.write('\n')
-
-            html_file = resources.path(html_dir, f'{data['id']}.html')
-            with open(html_file, 'w') as fp:
-                fp.write(html)
+        super().__init__(browser, headless, json_file, brand='gibson')
     
 
     def _get_guitar_raw(self):
@@ -55,21 +28,22 @@ class GibsonScraper:
                 .find_elements_by_tag_name('a')
         )
 
-        for body_type_href in [a.get_attribute('href') for a in anchors]:
-            self._driver.get(body_type_href)
-            anchors = (
+        for category_href in [a.get_attribute('href') for a in anchors]:
+            self._driver.get(category_href)
+            product_anchors = (
                 self._driver
                     .find_element_by_id('body-wrap')
                     .find_elements_by_tag_name('a')
             )
             hrefs = {
-                anchor.get_attribute('href') for anchor in anchors
+                anchor.get_attribute('href') for anchor in product_anchors
                 if not anchor.get_attribute('class') == 'collection-link'
             }
 
             for href in hrefs:
                 self._driver.get(href)
-                yield (href, self._driver.page_source)
+                html = self._driver.page_source  #TODO move html to _merged_parsed_data? avoid loading page 2x
+                yield (href, html)
 
 
     def _merge_parsed_data(self, url):
@@ -77,14 +51,12 @@ class GibsonScraper:
 
         id = urlparse(url).path.split('/')[2]
 
-        image_data = self._parse_image_carousel()
         buying_data = self._parse_buying_options()
         product_data = self._parse_product_overview()
         related_data = self._parse_related_products()
         
         guitar_data = collections.ChainMap(
             dict(id=id, url=url), 
-            image_data, 
             buying_data,
             product_data,
             related_data,
@@ -95,8 +67,8 @@ class GibsonScraper:
     def _parse_image_carousel(self):
         image_urls = []
         carousel = self._driver.find_element_by_class_name('carousel-indicators')
-        for item in carousel.find_elements_by_tag_name('li'):
-            item.click()
+        for image_item in carousel.find_elements_by_tag_name('li'):
+            image_item.click()
             image_url = (
                 self._driver
                     .find_element_by_class_name('active')
@@ -122,18 +94,21 @@ class GibsonScraper:
         finish_selector = buying_options.find_element_by_class_name('finish-selector')
 
         versions = []
-        for label in orientation.find_elements_by_tag_name('label'):
-            for anchor in finish_selector.find_elements_by_tag_name('a'):
-                if 'disabled' in label.get_attribute('class'):
+        for handedness_label in orientation.find_elements_by_tag_name('label'):
+            for finish_anchor in finish_selector.find_elements_by_tag_name('a'):
+                finish_anchor.click()
+                if 'disabled' in handedness_label.get_attribute('class'):
                     continue
                 else:
-                    label.click()
-                    handedness = label.get_attribute('for')
+                    handedness_label.click()
+                    handedness = handedness_label.get_attribute('for')
 
-                anchor.click()
-                finish = anchor.get_attribute('title')
+                finish = finish_anchor.get_attribute('title')
                 price = buying_options.find_element_by_id('localized-price').text
+                image_data = self._parse_image_carousel()
+
                 version = dict(handedness=handedness, finish=finish, price=price)
+                version.update(image_data)
                 versions.append(version)
         
         buying_options_data = dict(
@@ -164,16 +139,20 @@ class GibsonScraper:
 
 
     def _parse_related_products(self):
-        related = (
-            self._driver
-                .find_element_by_class_name('related-treasure')
-                .find_element_by_class_name('row')
-        )
-
+        driver = self._get_driver()
+        related = (driver.find_element_by_class_name('related-treasure')
+                         .find_element_by_class_name('row'))
         related_products = []
-        for anchor in related.find_elements_by_tag_name('a'):
-            product, *_ = anchor.text.split('\n')
+        for product_anchor in related.find_elements_by_tag_name('a'):
+            product, *_ = product_anchor.text.split('\n')
             related_products.append(product)
         
         related_data = dict(related_products=related_products)
+        driver.close()
         return related_data
+
+
+def main():
+    gibson_scraper = GibsonScraper()
+    with gibson_scraper:
+        gibson_scraper.save_guitar_data()
