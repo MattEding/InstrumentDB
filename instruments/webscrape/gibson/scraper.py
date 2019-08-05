@@ -86,7 +86,7 @@ class GibsonScraper(ScraperABC):
         self._driver.refresh()
 
         cart_options = self._driver.find_element_by_id('cart-options')
-        model_name, headline = cart_options.find_element_by_tag_name('h2').text.split('\n')
+        product_name, headline = cart_options.find_element_by_tag_name('h2').text.split('\n')
         description = cart_options.find_element_by_tag_name('div').text
         
         buying_options = cart_options.find_element_by_id('ecomm-cta')
@@ -112,7 +112,7 @@ class GibsonScraper(ScraperABC):
                 versions.append(version)
         
         buying_options_data = dict(
-            model_name=model_name,
+            product_name=product_name,
             headline=headline,
             description=description,
             version=versions,
