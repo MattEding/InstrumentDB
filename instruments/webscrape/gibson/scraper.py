@@ -85,8 +85,6 @@ class GibsonScraper(ScraperABC):
 
 
     def _parse_buying_options(self):
-        #: refresh to ensure price is loaded
-        # self._driver.refresh()
         WebDriverWait(self._driver, 10).until(
             expected_conditions.presence_of_element_located((By.ID, 'localized-price'))
         )

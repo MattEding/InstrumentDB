@@ -47,14 +47,18 @@ class ScraperABC(abc.ABC):
 
     def save_guitar_data(self):
         for url, html in self._get_guitar_raw():
-            data = self._merge_parsed_data(url)
+            html_dir = f'instruments.data.{self.brand}.html'
+            with resources.path(html_dir, '') as html_dir:
+                id = urlparse(url).path.split('/')[2]
+                html_file = html_dir / f'{id}.html'
 
+                if html_file in html_dir.iterdir():
+                    continue
+
+                with open(html_file, 'w') as fp:
+                    fp.write(html)
+
+            data = self._merge_parsed_data(url)
             with open(self.json_file, 'a') as fp:
                 json.dump(data, fp)
                 fp.write('\n')
-
-            html_dir = f'instruments.data.{self.brand}.html'
-            with resources.path(html_dir, '') as html_dir:
-                html_file = html_dir / f'{data["id"]}.html'
-                with open(html_file, 'w') as fp:
-                    fp.write(html)
