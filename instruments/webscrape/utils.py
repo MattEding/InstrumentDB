@@ -1,6 +1,7 @@
 import abc
 import json
 from importlib import resources
+from urllib.parse import urlparse
 
 from selenium import webdriver
 
