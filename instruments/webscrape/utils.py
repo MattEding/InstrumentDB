@@ -1,5 +1,9 @@
 import abc
+import json
 from importlib import resources
+
+from selenium import webdriver
+
 
 class ScraperABC(abc.ABC):
     def __init__(
@@ -15,7 +19,8 @@ class ScraperABC(abc.ABC):
         self.headless = bool(headless)
         self.brand = str(brand).lower()
         json_dir = f'instruments.data.{self.brand}.json'
-        self.json_file = resources.path(json_dir, str(json_file))
+        with resources.path(json_dir, '') as json_dir:
+            self.json_file = json_dir / str(json_file)
         self._driver = None
         self._root_url = f'https://www.{self.brand}.com/'
         
@@ -41,27 +46,15 @@ class ScraperABC(abc.ABC):
 
 
     def save_guitar_data(self):
-        for url, html in self._get_guitar_raw:
+        for url, html in self._get_guitar_raw():
             data = self._merge_parsed_data(url)
 
             with open(self.json_file, 'a') as fp:
-                json.dump(data)
+                json.dump(data, fp)
                 fp.write('\n')
 
             html_dir = f'instruments.data.{self.brand}.html'
-            html_file = resources.path(html_dir, f'{data['id']}.html')
-            with open(html_file, 'w') as fp:
-                fp.write(html)
-
-
-    def save_guitar_data(self):
-        for url, html in self._get_guitar_raw:
-            data = self._merge_parsed_data(url)
-
-            with open(self.json_file, 'a') as fp:
-                json.dump(data)
-                fp.write('\n')
-
-            html_file = resources.path(html_dir, f'{data['id']}.html')
-            with open(html_file, 'w') as fp:
-                fp.write(html)
+            with resources.path(html_dir, '') as html_dir:
+                html_file = html_dir / f'{data["id"]}.html'
+                with open(html_file, 'w') as fp:
+                    fp.write(html)

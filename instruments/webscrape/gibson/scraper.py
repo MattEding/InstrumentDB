@@ -5,6 +5,9 @@ from importlib import resources
 from urllib.parse import urlparse
 
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.ui import WebDriverWait
 
 # from instruments.data.gibson import json as json_dir, html as html_dir
 from instruments.webscrape.utils import ScraperABC
@@ -83,10 +86,18 @@ class GibsonScraper(ScraperABC):
 
     def _parse_buying_options(self):
         #: refresh to ensure price is loaded
-        self._driver.refresh()
+        # self._driver.refresh()
+        WebDriverWait(self._driver, 10).until(
+            expected_conditions.presence_of_element_located((By.ID, 'localized-price'))
+        )
 
         cart_options = self._driver.find_element_by_id('cart-options')
-        product_name, headline = cart_options.find_element_by_tag_name('h2').text.split('\n')
+        try:
+            product_name, headline = cart_options.find_element_by_tag_name('h2').text.split('\n')
+        except ValueError:
+            product_name = cart_options.find_element_by_tag_name('h2').text
+            headline = None
+
         description = cart_options.find_element_by_tag_name('div').text
         
         buying_options = cart_options.find_element_by_id('ecomm-cta')
@@ -139,8 +150,7 @@ class GibsonScraper(ScraperABC):
 
 
     def _parse_related_products(self):
-        driver = self._get_driver()
-        related = (driver.find_element_by_class_name('related-treasure')
+        related = (self._driver.find_element_by_class_name('related-treasure')
                          .find_element_by_class_name('row'))
         related_products = []
         for product_anchor in related.find_elements_by_tag_name('a'):
@@ -148,11 +158,10 @@ class GibsonScraper(ScraperABC):
             related_products.append(product)
         
         related_data = dict(related_products=related_products)
-        driver.close()
         return related_data
 
 
-def main():
-    gibson_scraper = GibsonScraper()
+def main(*args, **kwargs):
+    gibson_scraper = GibsonScraper(*args, **kwargs)
     with gibson_scraper:
         gibson_scraper.save_guitar_data()
