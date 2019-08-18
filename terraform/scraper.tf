@@ -4,16 +4,12 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "gibson" {
-    bucket  = "..."
+    bucket  = "instruments-data-gibson"
     acl     = "private"
-
-    tags = {
-        Name = "gibson jsons"
-    }
 }
 
 resource "aws_glacier_vault" "gibson" {
-    name = "gibson htmls"
+    name = "instruments-raw-gibson"
 }
 
 resource "aws_instance" "gibson" {
