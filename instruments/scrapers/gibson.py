@@ -1,13 +1,16 @@
 import itertools
-import json # or put directly into postgres / s3? -- consider concurrency / put in a different file?
+import json
+import logging
+from concurrent import futures
+from importlib import resources
+from pathlib import Path
+from urllib.parse import urlparse
+
 
 from selenium import webdriver
 from selenium.common import exceptions
-from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 
 
 #: monkey patching to provide aliases
@@ -20,6 +23,19 @@ WebElement.elems = WebElement.find_elements_by_css_selector
 
 
 ROOT_URL = 'https://www.gibson.com'
+
+LOGGER = logging.getLogger(__file__)
+LOGGER.setLevel(logging.INFO)
+path = Path(__file__).parent
+handler = logging.FileHandler(path / 'gibson.log')
+LOGGER.addHandler(handler)
+
+
+with resources.path('instruments.data.gibson.html', '') as HTML_DIR:
+    pass
+
+with resources.path('instruments.data.gibson.json', '') as JSON_DIR:
+    JSON_FILE = JSON_DIR / 'model.json'
 
 
 def get_driver(browser='Firefox', headless=True):
@@ -46,7 +62,6 @@ def get_driver(browser='Firefox', headless=True):
     return driver
 
 
-#TODO rename generators from get_xyz --> iter_xyz?
 def get_style_urls():
     """Get URLs for guitar styles.
 
@@ -90,8 +105,11 @@ def parse_model(model_url):
     model_url : str
     URL for a guitar model
 
-    Returns
-    -------
+    Yields
+    ------
+    id : str
+    ...
+
     html : str
     Raw HTML for guitar model URL excluding WebDriver interactions.
 
@@ -99,10 +117,16 @@ def parse_model(model_url):
     Extracted data for guitar model including WebDriver interactions.
     """
 
+    id = urlparse(model_url).path.split('/')[2]
+    #: yield to allow check if already processed url by looking only at ID
+    #   to avoid creating resources for web driver
+    yield id
+
     with get_driver() as driver:
         driver.get(model_url)
         
         html = driver.page_source
+        yield html
 
         header = get_header(driver)
         versions = list(get_versions(driver))
@@ -115,7 +139,7 @@ def parse_model(model_url):
             related=[elem.attr('href') for elem in driver.elems('.related-item')],
         )
         model.update(header)
-        return (html, model)
+        yield model
 
 
 def get_header(driver):
@@ -162,8 +186,7 @@ def get_versions(driver):
     ...
     """
 
-    #: bypass pricing messages of the form
-    #: "We are unfortunately unable to ship this guitar ..."
+    #: bypass pricing messages of the form "We are unfortunately unable to ship this guitar"
     driver.refresh()
 
     finishes = driver.elems('.finish-selector a')
@@ -206,7 +229,7 @@ def get_image_urls(driver):
     thumbnails = driver.elems('.carousel-indicators li')
     for thumb in thumbnails:
         thumb.click()
-            image_url = [img.attr('src') for img in driver.elems('.active img')]
+        image_url = [img.attr('src') for img in driver.elems('.active img')]
         yield image_url
 
 
@@ -236,4 +259,50 @@ def get_specifications(driver):
         specs[header] = rows
 
     return specs
+
+
+def save_model(model_url):
+    """
+    """
+
+    LOGGER.info(f'starting {model_url}')
+
+    try:
+        id, html, model = parse_model(model_url)
+    except Exception:
+        LOGGER.error()
+
+    with open(JSON_FILE, 'a') as fp:
+        json.dump(model, fp)
     
+    html_file = HTML_DIR / f'{id}.html'
+    with open(html_file, 'w') as fp:
+        fp.write(html)
+    
+    LOGGER.info(f'finished {model_url}')
+
+
+def get_urls():
+    """
+    """
+
+    for style_url in get_style_urls():
+        yield from get_model_urls(style_url)
+    
+
+def main(max_workers=None):
+    """
+    """
+
+    finished = set(path.stem for path in HTML_DIR.iterdir())
+    work = []
+
+    for url in (url for url in get_urls() if url not in finished):
+        iterator = parse_model(url)
+        id = next(iterator)
+        iterator.close()
+        if id not in finished:
+            work.append(url)
+    
+    with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        executor.map(save_model, work)
