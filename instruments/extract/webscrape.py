@@ -4,7 +4,7 @@ import logging
 from concurrent import futures
 from importlib import resources
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib import parse
 
 
 from selenium import webdriver
@@ -31,10 +31,10 @@ handler = logging.FileHandler(path / 'gibson.log')
 LOGGER.addHandler(handler)
 
 
-with resources.path('instruments.data.gibson.html', '') as HTML_DIR:
+with resources.path('instruments.data.html', '') as HTML_DIR:
     pass
 
-with resources.path('instruments.data.gibson.json', '') as JSON_DIR:
+with resources.path('instruments.data.json', '') as JSON_DIR:
     JSON_FILE = JSON_DIR / 'model.json'
 
 
@@ -117,7 +117,7 @@ def parse_model(model_url):
     Extracted data for guitar model including WebDriver interactions.
     """
 
-    id = urlparse(model_url).path.split('/')[2]
+    id = parse.urlparse(model_url).path.split('/')[2]
     #: yield to allow check if already processed url by looking only at ID
     #   to avoid creating resources for web driver
     yield id
@@ -156,7 +156,13 @@ def get_header(driver):
     ...
     """
 
-    description = driver.elem('.marketing-copy').text.split('\n')[0]
+    marketing = driver.elem('.marketing-copy')
+    try:
+        message = marketing.elem('p').text
+    except exceptions.NoSuchElementException:
+        message = ''
+    
+    description = marketing.text.strip(message).strip().split('\n')[0]
     headline = driver.elem('.marketing-headline').text.split('\n')
     product_name = headline[0]
     try:
@@ -201,7 +207,7 @@ def get_versions(driver):
         handedness = h_elem.attr('for')
         finish = f_elem.attr('title')
         price = driver.elem('.local-price').text
-        images = list(get_image_urls(driver))
+        images = get_image_urls(driver, finish)
 
         version = dict(
             handedness=handedness,
@@ -212,7 +218,7 @@ def get_versions(driver):
         yield version
 
 
-def get_image_urls(driver):
+def get_image_urls(driver, finish):
     """...
 
     Parameters
@@ -220,17 +226,16 @@ def get_image_urls(driver):
     driver : WebDriver
     ...
 
-    Yields
+    Returns
     -------
-    image_url : str
+    image_urls : list[str]
     ...
     """
 
-    thumbnails = driver.elems('.carousel-indicators li')
-    for thumb in thumbnails:
-        thumb.click()
-        image_url = [img.attr('src') for img in driver.elems('.active img')]
-        yield image_url
+    finish = parse.quote(finish)
+    image_urls = (img.attr('src') for img in driver.elems('.carousel-indicators li img'))
+    image_urls = [url for url in image_urls if url and finish in url]
+    return image_urls
 
 
 def get_specifications(driver):
