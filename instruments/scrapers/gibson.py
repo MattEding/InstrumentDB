@@ -274,6 +274,7 @@ def save_model(model_url):
 
     with open(JSON_FILE, 'a') as fp:
         json.dump(model, fp)
+        fp.write('\n')
     
     html_file = HTML_DIR / f'{id}.html'
     with open(html_file, 'w') as fp:

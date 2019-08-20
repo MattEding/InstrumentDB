@@ -1,0 +1,106 @@
++======================
+| Versions
++======================
+| id            INTEGER     PRIMARY KEY
+| price         FLOAT       NOT NULL
+| handedness    CHAR(1)     CHECK (handedness IN ('L', 'R'))
+| finsih_id     INTEGER     REFERENCES finishes(id)
+| model_id      INTEGER     REFERENCES models(id)
++----------------------
+
+
++======================
+| Finishes
++======================
+| id            INTEGER     PRIMARY KEY
+| finish        VARCHAR     NOT NULL
++----------------------
+
+
++======================
+| Pickups
++======================
+| id            INTEGER     PRIMARY KEY
+| pickup        VARCHAR     NOT NULL
++----------------------
+
+
++======================
+| Images
++======================
+| id            INTEGER     PRIMARY KEY
+| url           VARCHAR     NOT NULL
+| version_id    INTEGER     NOT NULL        REFERENCES versions(id)
++----------------------
+
+
+# TODO fix this relationship
++======================
+| Related
++======================
+| id            INTEGER        PRIMARY KEY
+| model_id      INTEGER        REFERENCES models(id)    NOT NULL
++----------------------
+
+
++======================
+| Models
++======================
+| id            INTEGER     PRIMARY KEY
+| name          VARCHAR     NOT NULL
+| headline      VARCHAR
+| description   VARCHAR
+| 
+| -- body --
+| back_material_id  INTEGER     REFERENCES materials(id)
+| body_material_id  INTEGER     REFERENCES materials(id)
+| side_material_id  INTEGER     REFERENCES materials(id)
+| top_material_id   INTEGER     REFERENCES materials(id)
+| finsih_id         INTEGER     REFERENCES finishes(id)     NOT NULL
+| binding           VARCHAR
+| binding_style     VARCHAR
+| body_shape        VARCHAR
+| bracing           VARCHAR
+| centerblock       VARCHAR
+| weight_relief     VARCHAR
+| 
+| -- electronics --
+| bridge_pickup_id          INTEGER     REFERENCES pickups(id)
+| middle_pickup_id          INTEGER     REFERENCES pickups(id)
+| neck_pickup_id            INTEGER     REFERENCES pickups(id)
+| under_saddle_pickup_id    INTEGER     REFERENCES pickups(id)
+| controls VARCHAR
+| 
+| -- hardware --
+| finsih_id             INTEGER         REFERENCES finsihes(id)
+| saddle_material_id    INTEGER         REFERENCES materials(id)
+| bridge                VARCHAR
+| bridge_pins           VARCHAR
+| control_knobs         VARCHAR
+| jack_plate            VARCHAR
+| pick_guard            VARCHAR
+| switch_tip            VARCHAR
+| switch_washer         VARCHAR
+| tailpiece             VARCHAR
+| truss_rod_cover       VARCHAR
+| tuner_plating         VARCHAR
+| tuners                VARCHAR
+| 
+| -- neck --
+| fingerboard_material_id   INTEGER     REFERENCES materials(id)    NOT NULL
+| neck_material             INTEGER     REFERENCES materials(id)    NOT NULL
+| nut_material              INTEGER     REFERENCES materials(id)
+| end_of_board_width        FLOAT       --inches
+| fingerboard_radius        FLOAT       --inches
+| frets                     VARCHAR
+| inlays                    VARCHAR     NOT NULL
+| neck_profile              VARCHAR
+| number_of_frets           INTEGER     NOT NULL
+| nut_width                 FLOAT       --inches
+| scale_length              FLOAT       --inches
+| 
+| -- miscellaneous --
+| case                      VARCHAR     NOT NULL
+| included_accessories      VARCHAR
+| strings                   INTEGER[]   NOT NULL
++----------------------
