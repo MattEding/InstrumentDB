@@ -37,87 +37,87 @@ def create_table(func):
 @create_table
 def models(): 
     return '''
-    model_id        INTEGER     PRIMARY KEY
-    , name          VARCHAR     NOT NULL
-    , headline      VARCHAR
-    , description   VARCHAR
+    model_id        INTEGER         PRIMARY KEY
+    , name          VARCHAR(75)     NOT NULL
+    , headline      VARCHAR(75)
+    , description   TEXT
     '''
 
 
 @create_table
 def bodies():
     return '''
-    model_id            INTEGER     PRIMARY KEY     REFERENCES models(model_id)         -- 1 to 1 relationship
-    , back_material_id  INTEGER                     REFERENCES materials(material_id)
-    , body_material_id  INTEGER                     REFERENCES materials(material_id)
-    , side_material_id  INTEGER                     REFERENCES materials(material_id)
-    , top_material_id   INTEGER                     REFERENCES materials(material_id)
-    , finsih_id         INTEGER                     REFERENCES finishes(finish_id)
-    , binding           VARCHAR
-    , binding_style     VARCHAR
-    , body_shape        VARCHAR
-    , bracing           VARCHAR
-    , centerblock       VARCHAR
-    , weight_relief     VARCHAR
+    model_id            INTEGER         PRIMARY KEY     REFERENCES models(model_id)         -- 1 to 1 relationship
+    , back_material_id  INTEGER                         REFERENCES materials(material_id)
+    , body_material_id  INTEGER                         REFERENCES materials(material_id)
+    , side_material_id  INTEGER                         REFERENCES materials(material_id)
+    , top_material_id   INTEGER                         REFERENCES materials(material_id)
+    , finsih_id         INTEGER                         REFERENCES finishes(finish_id)
+    , binding           VARCHAR(75)
+    , binding_style     VARCHAR(75)
+    , body_shape        VARCHAR(75)
+    , bracing           VARCHAR(75)
+    , centerblock       VARCHAR(75)
+    , weight_relief     VARCHAR(75)
     '''
 
 
 @create_table
 def electronics():
     return '''
-    model_id                    INTEGER     PRIMARY KEY     REFERENCES models(model_id)     -- 1 to 1 relationship
-    , bridge_pickup_id          INTEGER                     REFERENCES pickups(pickup_id)
-    , middle_pickup_id          INTEGER                     REFERENCES pickups(pickup_id)
-    , neck_pickup_id            INTEGER                     REFERENCES pickups(pickup_id)
-    , under_saddle_pickup_id    INTEGER                     REFERENCES pickups(pickup_id)
-    , controls                  VARCHAR
+    model_id                    INTEGER         PRIMARY KEY     REFERENCES models(model_id)     -- 1 to 1 relationship
+    , bridge_pickup_id          INTEGER                         REFERENCES pickups(pickup_id)
+    , middle_pickup_id          INTEGER                         REFERENCES pickups(pickup_id)
+    , neck_pickup_id            INTEGER                         REFERENCES pickups(pickup_id)
+    , under_saddle_pickup_id    INTEGER                         REFERENCES pickups(pickup_id)
+    , controls                  VARCHAR(150)
     '''
 
 
 @create_table
 def hardwares():
     return '''
-    model_id                INTEGER     PRIMARY KEY     REFERENCES models(model_id)         -- 1 to 1 relationship
-    , finsih_id             INTEGER                     REFERENCES finsihes(finish_id)
-    , saddle_material_id    INTEGER                     REFERENCES materials(material_id)
-    , bridge                VARCHAR
-    , bridge_pins           VARCHAR
-    , control_knobs         VARCHAR
-    , jack_plate            VARCHAR
-    , pick_guard            VARCHAR
-    , switch_tip            VARCHAR
-    , switch_washer         VARCHAR
-    , tailpiece             VARCHAR
-    , truss_rod_cover       VARCHAR
-    , tuner_plating         VARCHAR
-    , tuners                VARCHAR
+    model_id                INTEGER         PRIMARY KEY     REFERENCES models(model_id)         -- 1 to 1 relationship
+    , finsih_id             INTEGER                         REFERENCES finsihes(finish_id)
+    , saddle_material_id    INTEGER                         REFERENCES materials(material_id)
+    , bridge                VARCHAR(75)
+    , bridge_pins           VARCHAR(75)
+    , control_knobs         VARCHAR(75)
+    , jack_plate            VARCHAR(75)
+    , pick_guard            VARCHAR(75)
+    , switch_tip            VARCHAR(75)
+    , switch_washer         VARCHAR(75)
+    , tailpiece             VARCHAR(75)
+    , truss_rod_cover       VARCHAR(75)
+    , tuner_plating         VARCHAR(75)
+    , tuners                VARCHAR(75)
     '''
 
 
 @create_table
 def necks():
     return '''
-    model_id                    INTEGER     PRIMARY KEY     REFERENCES models(model_id)         -- 1 to 1 relationship
-    , fingerboard_material_id   INTEGER                     REFERENCES materials(material_id)
-    , neck_material             INTEGER                     REFERENCES materials(material_id)
-    , nut_material              INTEGER                     REFERENCES materials(material_id)
-    , end_of_board_width        FLOAT       -- inches
-    , fingerboard_radius        FLOAT       -- inches
-    , frets                     VARCHAR
-    , inlays                    VARCHAR
-    , neck_profile              VARCHAR
+    model_id                    INTEGER         PRIMARY KEY     REFERENCES models(model_id)         -- 1 to 1 relationship
+    , fingerboard_material_id   INTEGER                         REFERENCES materials(material_id)
+    , neck_material             INTEGER                         REFERENCES materials(material_id)
+    , nut_material              INTEGER                         REFERENCES materials(material_id)
+    , end_of_board_width        FLOAT           -- inches
+    , fingerboard_radius        FLOAT           -- inches
+    , frets                     VARCHAR(75)
+    , inlays                    VARCHAR(75)
+    , neck_profile              VARCHAR(75)
     , number_of_frets           INTEGER
-    , nut_width                 FLOAT       -- inches
-    , scale_length              FLOAT       -- inches
+    , nut_width                 FLOAT           -- inches
+    , scale_length              FLOAT           -- inches
     '''
 
 
 @create_table
 def miscs():
     return '''
-    model_id        INTEGER     PRIMARY KEY     REFERENCES models(model_id)     -- 1 to 1 relationship
-    , case          VARCHAR     NOT NULL
-    , accessories   VARCHAR
+    model_id        INTEGER         PRIMARY KEY     REFERENCES models(model_id)     -- 1 to 1 relationship
+    , case          VARCHAR(75)     NOT NULL
+    , accessories   VARCHAR(200)
     , strings       FLOAT[]
     '''
 
@@ -125,8 +125,8 @@ def miscs():
 @create_table
 def materials():
     return '''
-    material_id     INTEGER     PRIMARY KEY
-    , material      VARCHAR     NOT NULL
+    material_id     INTEGER         PRIMARY KEY
+    , material      VARCHAR(150)    NOT NULL
     '''
 
 
@@ -144,25 +144,25 @@ def versions():
 @create_table
 def finishes():
     return '''
-    finish_id   INTEGER     PRIMARY KEY
-    , finish    VARCHAR     NOT NULL
+    finish_id   INTEGER         PRIMARY KEY
+    , finish    VARCHAR(150)    NOT NULL
     '''
 
 
 @create_table
 def pickups():
     return '''
-    pickup_id   INTEGER     PRIMARY KEY
-    , pickup    VARCHAR     NOT NULL
+    pickup_id   INTEGER         PRIMARY KEY
+    , pickup    VARCHAR(150)    NOT NULL
     '''
 
 
 @create_table
 def images():
     return '''
-    image_id        INTEGER     PRIMARY KEY
-    , url           VARCHAR     NOT NULL
-    , version_id    INTEGER     NOT NULL        REFERENCES versions(version_id)
+    image_id        INTEGER         PRIMARY KEY
+    , url           VARCHAR(100)    NOT NULL
+    , version_id    INTEGER         NOT NULL        REFERENCES versions(version_id)
     '''
 
 
