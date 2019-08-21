@@ -57,9 +57,7 @@ def test_versions(driver):
         images=[
             'https://static.gibson.com/product-images/Custom/CUSGFA436/Cherry%20Red/front-banner-1600_900.png',
             'https://static.gibson.com/product-images/Custom/CUSGFA436/Cherry%20Red/beauty-1600_900.png',
-            # when other finish selected, shows other image in carousel slot
             'https://static.gibson.com/product-images/Custom/CUSGFA436/Cherry%20Red/back-banner-1600_900.png',
-            # same here. can use finish value to populate/verify url
         ],
     )
 
@@ -76,6 +74,7 @@ def test_versions(driver):
         ],
     )
 
+    assert len(output) == 4
     assert expected_1 in output
     assert expected_2 in output
 

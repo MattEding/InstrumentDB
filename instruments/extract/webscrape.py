@@ -27,7 +27,7 @@ ROOT_URL = 'https://www.gibson.com'
 LOGGER = logging.getLogger(__file__)
 LOGGER.setLevel(logging.INFO)
 path = Path(__file__).parent
-handler = logging.FileHandler(path / 'gibson.log')
+handler = logging.FileHandler(path / 'scraper.log')
 LOGGER.addHandler(handler)
 
 
@@ -117,9 +117,9 @@ def parse_model(model_url):
     Extracted data for guitar model including WebDriver interactions.
     """
 
+    #: yield to allow check if URL has already been processed by
+    #: looking only at ID to avoid creating resources for web driver
     id = parse.urlparse(model_url).path.split('/')[2]
-    #: yield to allow check if already processed url by looking only at ID
-    #   to avoid creating resources for web driver
     yield id
 
     with get_driver() as driver:
@@ -158,6 +158,7 @@ def get_header(driver):
 
     marketing = driver.elem('.marketing-copy')
     try:
+        #: some models have quality assurance message in description
         message = marketing.elem('p').text
     except exceptions.NoSuchElementException:
         message = ''

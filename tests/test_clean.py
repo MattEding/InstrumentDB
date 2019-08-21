@@ -1,5 +1,6 @@
 from instruments.transform.clean import clean
 
+
 def test_clean():
     input = dict(
         outer=dict(
