@@ -40,7 +40,7 @@ def test_header(driver):
     '''
 
     expected = dict(
-        product_name=name,
+        name=name,
         headline=textwrap.dedent(headline).replace('\n', ''),
         description=textwrap.dedent(description).replace('\n', ''),
     )

@@ -1,4 +1,3 @@
-import json
 from copy import deepcopy
 from importlib import resources
 
@@ -34,16 +33,3 @@ def clean(data):
                 data = float(data[1:].replace(',', ''))
 
     return data
-
-
-def main():
-    with resources.path('instruments.data.json', '') as json_path:
-        pass
-
-    with open(json_path / 'model.json') as old, open(json_path / 'clean.json') as new:
-        for line in old.readlines():
-            data = json.loads(line)
-            data = clean(data)
-
-            json.dump(data, new)
-            new.write('\n')

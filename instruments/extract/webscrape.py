@@ -12,6 +12,8 @@ from selenium.common import exceptions
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
+from instruments.transform import clean
+
 
 #: monkey patching to provide aliases
 WebDriver.elem = WebDriver.find_element_by_css_selector
@@ -135,11 +137,11 @@ def parse_model(model_url):
         model = dict(
             url=driver.current_url, 
             versions=versions,
-            specifications=specs,
             related=[elem.attr('href') for elem in driver.elems('.related-item')],
         )
         model.update(header)
-        yield model
+        model.update(specs)
+        yield clean.clean(model)
 
 
 def get_header(driver):
@@ -165,14 +167,14 @@ def get_header(driver):
     
     description = marketing.text.strip(message).strip().split('\n')[0]
     headline = driver.elem('.marketing-headline').text.split('\n')
-    product_name = headline[0]
+    name = headline[0]
     try:
         headline = headline[1]
     except IndexError:
         headline = None
 
     header = dict(
-        product_name=product_name,
+        name=name,
         headline=headline,
         description=description,
     )
@@ -311,5 +313,5 @@ def main(max_workers=None):
         if id not in finished:
             work.append(url)
     
-    with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+    with futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
         executor.map(save_model, work)
