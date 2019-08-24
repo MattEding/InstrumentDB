@@ -1,5 +1,13 @@
-.vscode/
 __pycache__/
+.pytest_cache/
+.terraform/
+.vscode/
 
+*.backup
+*.html
+*.json
 *.log
+*.tfstate
+*.zip
+
 credentials.auto.tfvars
